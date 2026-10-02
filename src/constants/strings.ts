@@ -1,7 +1,7 @@
 export const PAGE_STRINGS = {
   COMMON: {
     APP_NAME: "CHUDDI",
-    APP_DOMAIN: ".STORE",
+    APP_DOMAIN: "",
     ADD_BUTTON: "ADD CHUDDI",
   },
   HOME: {
@@ -29,11 +29,11 @@ export const PAGE_STRINGS = {
     THREAT_LABEL: "Kitni badi problem hai bhai?",
     PROBLEM_LABEL: "TERI CHUDDI (PROBLEM KYA HAI?)",
     PLACEHOLDER: "Bhai kya batau, sach mein lag gaye...",
-    SUBMIT_BTN: "CHUDDI SUBMIT KAR!",
+    SUBMIT_BTN: "SUBMIT",
     LEVELS: {
-      DHOOM: "🟢 DHOOM (Chhoti problem)",
-      CHUDDI: "🟡 CHUDDI (Medium level)",
-      DHOOM_CHUDDI: "🔴 DHOOM CHUDDI (Bohot badi problem)"
+      DHOOM: "🟢 DHOOM",
+      CHUDDI: "🟡 CHUDDI",
+      DHOOM_CHUDDI: "🔴 DHOOM CHUDDI"
     }
   }
 };

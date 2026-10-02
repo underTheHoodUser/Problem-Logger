@@ -10,6 +10,8 @@ export function ProblemCard({
   downvotes,
   createdAt,
   index,
+  onUpvote,
+  onDownvote,
 }: ProblemCardProps) {
   const {
     color: chipColor,
@@ -51,11 +53,17 @@ export function ProblemCard({
 
       {/* Actions */}
       <div className="relative z-10 flex items-center gap-4">
-        <button className="flex items-center gap-1.5 bg-white border-2 border-black rounded-full px-4 py-1.5 text-sm font-black text-black hover:bg-cyan-400 transition-colors shadow-[2px_2px_0_0_#000] hover:shadow-[2px_2px_0_0_#06b6d4]">
+        <button 
+          onClick={onUpvote}
+          className="flex items-center gap-1.5 bg-white border-2 border-black rounded-full px-4 py-1.5 text-sm font-black text-black hover:bg-cyan-400 transition-colors shadow-[2px_2px_0_0_#000] hover:shadow-[2px_2px_0_0_#06b6d4] active:scale-95 cursor-pointer touch-manipulation"
+        >
           <ArrowUp className="w-4 h-4 stroke-[3px]" />
           <span>{upvotes}</span>
         </button>
-        <button className="flex items-center gap-1.5 bg-white border-2 border-black rounded-full px-4 py-1.5 text-sm font-black text-black hover:bg-pink-400 hover:text-white transition-colors shadow-[2px_2px_0_0_#000] hover:shadow-[2px_2px_0_0_#ec4899]">
+        <button 
+          onClick={onDownvote}
+          className="flex items-center gap-1.5 bg-white border-2 border-black rounded-full px-4 py-1.5 text-sm font-black text-black hover:bg-pink-400 hover:text-white transition-colors shadow-[2px_2px_0_0_#000] hover:shadow-[2px_2px_0_0_#ec4899] active:scale-95 cursor-pointer touch-manipulation"
+        >
           <ArrowDown className="w-4 h-4 stroke-[3px]" />
           <span>{downvotes}</span>
         </button>

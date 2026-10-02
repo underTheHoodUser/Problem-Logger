@@ -1,7 +1,45 @@
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { PAGE_STRINGS } from "@/constants/strings";
+import { SeverityLevel } from "@/components/ProblemCard";
+import { supabase } from "@/lib/supabase";
 
 export default function AddChuddi() {
+  const router = useRouter();
   const S = PAGE_STRINGS.ADD_PAGE;
+  const [selectedLevel, setSelectedLevel] = useState<SeverityLevel>('chuddi');
+  const [content, setContent] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  const LEVELS = [
+    { id: 'dhoom', text: S.LEVELS.DHOOM, color: 'bg-green-400', border: 'border-green-500', shadow: '#4ade80' },
+    { id: 'chuddi', text: S.LEVELS.CHUDDI, color: 'bg-yellow-400', border: 'border-yellow-500', shadow: '#facc15' },
+    { id: 'dhoom_chuddi', text: S.LEVELS.DHOOM_CHUDDI, color: 'bg-red-500', border: 'border-red-600', shadow: '#ef4444' },
+  ] as const;
+
+  const handleSubmit = async () => {
+    if (!content.trim()) return alert("Bhai problem toh likh!");
+    
+    setIsSubmitting(true);
+    
+    // Insert into Supabase
+    const { error } = await supabase
+      .from('problems')
+      .insert([
+        { content, level: selectedLevel }
+      ]);
+      
+    setIsSubmitting(false);
+    
+    if (error) {
+      console.error(error);
+      alert("Error ho gaya bhai, console check kar.");
+    } else {
+      router.push('/');
+    }
+  };
   
   return (
     <div className="max-w-2xl mx-auto py-4 md:py-8">
@@ -21,12 +59,26 @@ export default function AddChuddi() {
             <span className="w-1.5 md:w-2 h-5 md:h-6 bg-cyan-400 inline-block transform skew-x-12"></span>
             {S.THREAT_LABEL}
           </label>
-          <div className="relative">
-            <select className="w-full appearance-none bg-[#222] border-4 border-zinc-700 rounded-xl px-4 py-3 md:px-5 md:py-4 text-base md:text-lg font-bold text-white focus:outline-none focus:border-cyan-400 transition-colors cursor-pointer shadow-[inset_0_4px_0_0_rgba(0,0,0,0.5)]">
-              <option value="dhoom">{S.LEVELS.DHOOM}</option>
-              <option value="chuddi">{S.LEVELS.CHUDDI}</option>
-              <option value="dhoom_chuddi">{S.LEVELS.DHOOM_CHUDDI}</option>
-            </select>
+          <div className="flex flex-row gap-2 md:gap-4 relative z-10">
+            {LEVELS.map((lvl) => {
+              const isSelected = selectedLevel === lvl.id;
+              return (
+                <button
+                  key={lvl.id}
+                  type="button"
+                  onClick={() => setSelectedLevel(lvl.id as SeverityLevel)}
+                  className={`flex-1 flex flex-col items-center justify-center text-center px-1 py-3 md:px-4 md:py-4 rounded-xl border-4 transition-all duration-200 cursor-pointer touch-manipulation select-none active:scale-95 ${
+                    isSelected 
+                      ? `${lvl.color} ${lvl.border} text-black transform -translate-y-1 md:-translate-y-2` 
+                      : `bg-[#222] border-zinc-700 text-zinc-400 hover:border-zinc-500 hover:bg-[#2a2a2a]`
+                  } font-bold text-[10px] sm:text-xs md:text-sm lg:text-base uppercase tracking-wide leading-tight`}
+                  style={isSelected ? { boxShadow: `4px 4px 0 0 ${lvl.shadow}` } : {}}
+                >
+                  <span className="text-base md:text-xl mb-1">{lvl.text.split(' ')[0]}</span>
+                  <span>{lvl.text.split(' ').slice(1).join(' ')}</span>
+                </button>
+              );
+            })}
           </div>
         </div>
 
@@ -36,14 +88,22 @@ export default function AddChuddi() {
             {S.PROBLEM_LABEL}
           </label>
           <textarea 
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
             rows={5}
             className="w-full bg-[#222] border-4 border-zinc-700 rounded-xl p-4 md:p-5 text-base md:text-lg text-white placeholder-zinc-500 focus:outline-none focus:border-pink-500 transition-colors resize-none shadow-[inset_0_4px_0_0_rgba(0,0,0,0.5)]"
             placeholder={S.PLACEHOLDER}
           />
         </div>
 
-        <button className="w-full bg-pink-500 border-4 border-pink-400 rounded-xl py-3 md:py-4 text-white text-xl md:text-3xl uppercase tracking-widest hover:bg-cyan-400 hover:text-black hover:border-cyan-300 transition-colors shadow-[4px_4px_0_0_#f43f5e] md:shadow-[6px_6px_0_0_#f43f5e] hover:translate-y-1 hover:shadow-[2px_2px_0_0_#06b6d4] font-['var(--font-rubik)']">
-          {S.SUBMIT_BTN}
+        <button 
+          onClick={handleSubmit}
+          disabled={isSubmitting}
+          className={`w-full bg-pink-500 border-4 border-pink-400 rounded-xl py-3 md:py-4 text-white text-xl md:text-3xl uppercase tracking-widest transition-colors shadow-[4px_4px_0_0_#f43f5e] md:shadow-[6px_6px_0_0_#f43f5e] font-['var(--font-rubik)'] active:scale-95 cursor-pointer touch-manipulation ${
+            isSubmitting ? 'opacity-50 cursor-not-allowed' : 'hover:bg-cyan-400 hover:text-black hover:border-cyan-300 hover:translate-y-1 hover:shadow-[2px_2px_0_0_#06b6d4]'
+          }`}
+        >
+          {isSubmitting ? 'SUBMITTING...' : S.SUBMIT_BTN}
         </button>
       </div>
     </div>
