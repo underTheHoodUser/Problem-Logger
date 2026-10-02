@@ -1,0 +1,219 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { supabase } from "@/lib/supabase";
+import { Trash2, ShieldAlert } from "lucide-react";
+
+export default function AdminPage() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [session, setSession] = useState<any>(null);
+  const [problems, setProblems] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loginError, setLoginError] = useState("");
+
+  useEffect(() => {
+    // Check active session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      if (session) fetchProblems();
+      else setLoading(false);
+    });
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+      if (session) fetchProblems();
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const fetchProblems = async () => {
+    setLoading(true);
+    const { data, error } = await supabase
+      .from('problems')
+      .select('*')
+      .order('created_at', { ascending: false });
+      
+    if (!error) setProblems(data || []);
+    setLoading(false);
+  };
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoginError("");
+    setLoading(true);
+    
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (error) {
+      setLoginError(error.message);
+      setLoading(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    setProblems([]);
+  };
+
+  const handleApprove = async (id: string) => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      const res = await fetch('/api/admin/approve', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session?.access_token}`
+        },
+        body: JSON.stringify({ id })
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        alert("Error approving problem: " + errorData.error);
+      } else {
+        setProblems(problems.map(p => p.id === id ? { ...p, is_approved: true } : p));
+      }
+    } catch (err: any) {
+      alert("Network error: " + err.message);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm("Pakka delete karna hai?")) return;
+    
+    const { error } = await supabase.from('problems').delete().eq('id', id);
+    
+    if (error) {
+      alert("Error deleting problem: " + error.message);
+    } else {
+      setProblems(problems.filter(p => p.id !== id));
+    }
+  };
+
+  if (loading && !session) {
+    return <div className="text-center py-20 text-yellow-400 font-bold animate-pulse font-['var(--font-rubik)'] text-2xl tracking-widest">LOADING ADMIN...</div>;
+  }
+
+  if (!session) {
+    return (
+      <div className="max-w-md mx-auto py-20 px-4">
+        <div className="bg-[#111] border-4 border-pink-500 rounded-3xl p-8 shadow-[8px_8px_0_0_#ec4899] text-center">
+          <ShieldAlert className="w-16 h-16 text-pink-500 mx-auto mb-4" />
+          <h1 className="text-3xl text-white font-black mb-6 font-['var(--font-rubik)']">ADMIN LOGIN</h1>
+          
+          {loginError && (
+            <div className="bg-red-500/20 text-red-500 border-2 border-red-500 rounded-lg p-3 mb-4 font-bold text-sm">
+              {loginError}
+            </div>
+          )}
+
+          <form onSubmit={handleLogin} className="space-y-4">
+            <input 
+              type="email" 
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Admin Email"
+              required
+              className="w-full bg-[#222] border-4 border-zinc-700 rounded-xl p-4 text-center text-lg text-white placeholder-zinc-500 focus:outline-none focus:border-cyan-400 font-bold"
+            />
+            <input 
+              type="password" 
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Password"
+              required
+              className="w-full bg-[#222] border-4 border-zinc-700 rounded-xl p-4 text-center text-lg text-white placeholder-zinc-500 focus:outline-none focus:border-cyan-400 font-bold"
+            />
+            <button 
+              type="submit"
+              disabled={loading}
+              className="w-full bg-cyan-400 border-4 border-black rounded-xl py-4 text-black text-xl font-black uppercase tracking-widest hover:bg-yellow-400 transition-colors shadow-[4px_4px_0_0_#000] active:scale-95 disabled:opacity-50"
+            >
+              {loading ? "AUTHENTICATING..." : "LOGIN"}
+            </button>
+          </form>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="max-w-4xl mx-auto py-10 px-4">
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-8">
+        <h1 className="text-3xl md:text-4xl text-white font-black font-['var(--font-rubik)'] drop-shadow-[2px_2px_0_#ec4899] text-center sm:text-left">
+          CHUDDI CONTROL PANEL
+        </h1>
+        <div className="flex items-center gap-4">
+          <span className="text-sm text-zinc-400 font-bold hidden md:block">Logged in as {session.user.email}</span>
+          <button 
+            onClick={handleLogout}
+            className="bg-[#222] border-2 border-zinc-700 text-zinc-300 px-4 py-2 rounded-lg font-bold text-sm hover:bg-red-500 hover:text-white hover:border-red-600 transition-colors"
+          >
+            LOGOUT
+          </button>
+        </div>
+      </div>
+
+      {loading ? (
+        <div className="text-center text-yellow-400 font-bold animate-pulse font-['var(--font-rubik)'] text-2xl tracking-widest">LOADING...</div>
+      ) : (
+        <div className="space-y-4">
+          {problems.map((prob) => (
+            <div key={prob.id} className={`bg-[#111] border-2 ${prob.is_approved ? 'border-zinc-700' : 'border-yellow-400 shadow-[4px_4px_0_0_#facc15]'} rounded-xl p-4 flex flex-col md:flex-row gap-4 items-start md:items-center justify-between transition-colors group`}>
+              <div className="flex-1">
+                <div className="flex flex-wrap gap-2 mb-3">
+                  {!prob.is_approved ? (
+                    <span className="bg-yellow-400 text-black px-2 py-1 rounded text-xs font-black uppercase tracking-widest animate-pulse">
+                      NEEDS APPROVAL
+                    </span>
+                  ) : (
+                    <span className="bg-green-400 text-black px-2 py-1 rounded text-xs font-black uppercase tracking-widest">
+                      APPROVED
+                    </span>
+                  )}
+                  <span className="bg-[#222] px-2 py-1 rounded text-xs font-bold text-zinc-400 uppercase border border-zinc-700">
+                    {prob.level}
+                  </span>
+                  <span className="bg-[#222] px-2 py-1 rounded text-xs font-bold text-cyan-400 border border-zinc-700">
+                    👍 {prob.upvotes}
+                  </span>
+                  <span className="bg-[#222] px-2 py-1 rounded text-xs font-bold text-pink-400 border border-zinc-700">
+                    👎 {prob.downvotes}
+                  </span>
+                </div>
+                <p className="text-white font-medium leading-relaxed">{prob.content}</p>
+              </div>
+              <div className="shrink-0 flex gap-2 w-full md:w-auto mt-2 md:mt-0">
+                {!prob.is_approved && (
+                  <button 
+                    onClick={() => handleApprove(prob.id)}
+                    className="flex-1 md:flex-none bg-green-400 border-2 border-green-500 text-black font-black hover:bg-green-300 px-4 py-3 rounded-lg transition-colors active:scale-95 shadow-[2px_2px_0_0_#22c55e]"
+                  >
+                    APPROVE
+                  </button>
+                )}
+                <button 
+                  onClick={() => handleDelete(prob.id)}
+                  className="flex-none bg-red-500/10 border-2 border-red-500 text-red-500 hover:bg-red-500 hover:text-white p-3 rounded-lg transition-colors active:scale-95 shadow-[2px_2px_0_0_#ef4444]"
+                  title="Delete Problem"
+                >
+                  <Trash2 className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+          ))}
+          {problems.length === 0 && (
+            <div className="text-center text-zinc-500 py-10 font-bold">No problems found.</div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}

@@ -12,6 +12,7 @@ export default function AddChuddi() {
   const [selectedLevel, setSelectedLevel] = useState<SeverityLevel>('chuddi');
   const [content, setContent] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
   
   const LEVELS = [
     { id: 'dhoom', text: S.LEVELS.DHOOM, color: 'bg-green-400', border: 'border-green-500', shadow: '#4ade80' },
@@ -24,20 +25,25 @@ export default function AddChuddi() {
     
     setIsSubmitting(true);
     
-    // Insert into Supabase
-    const { error } = await supabase
-      .from('problems')
-      .insert([
-        { content, level: selectedLevel }
-      ]);
+    try {
+      const res = await fetch('/api/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content, level: selectedLevel })
+      });
+
+      const data = await res.json();
       
-    setIsSubmitting(false);
-    
-    if (error) {
-      console.error(error);
-      alert("Error ho gaya bhai, console check kar.");
-    } else {
-      router.push('/');
+      if (!res.ok) {
+        alert(data.error || "Error ho gaya bhai, server check kar.");
+      } else {
+        setIsSuccess(true);
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Network error ho gaya.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
   
@@ -52,7 +58,24 @@ export default function AddChuddi() {
         </div>
       </div>
 
-      <div className="bg-[#111] border-4 border-cyan-400 rounded-3xl p-4 md:p-8 shadow-[4px_4px_0_0_#06b6d4] md:shadow-[8px_8px_0_0_#06b6d4] space-y-6 md:space-y-8">
+      {isSuccess ? (
+        <div className="bg-[#111] border-4 border-green-400 rounded-3xl p-8 md:p-12 shadow-[8px_8px_0_0_#4ade80] text-center space-y-6">
+          <div className="text-6xl mb-4">🙌</div>
+          <h2 className="text-3xl md:text-4xl text-white font-black uppercase font-['var(--font-rubik)']">
+            TERI CHUDDI SUBMIT HO GAYI!
+          </h2>
+          <p className="text-zinc-400 text-lg md:text-xl font-bold">
+            Admin ke approve karte hi public feed me dikhne lagegi. Spam se bachne ke liye approval zaroori hai!
+          </p>
+          <button 
+            onClick={() => router.push('/')}
+            className="w-full bg-cyan-400 border-4 border-black rounded-xl py-3 md:py-4 text-black text-xl md:text-2xl font-black uppercase tracking-widest hover:bg-yellow-400 transition-colors shadow-[4px_4px_0_0_#000] active:scale-95 cursor-pointer touch-manipulation mt-4"
+          >
+            FEED PE WAPAS JAA
+          </button>
+        </div>
+      ) : (
+        <div className="bg-[#111] border-4 border-cyan-400 rounded-3xl p-4 md:p-8 shadow-[4px_4px_0_0_#06b6d4] md:shadow-[8px_8px_0_0_#06b6d4] space-y-6 md:space-y-8">
         
         <div className="space-y-2 md:space-y-3">
           <label className="text-lg md:text-2xl text-slate-100 uppercase flex items-center gap-2 font-['var(--font-rubik)'] tracking-wide">
@@ -106,6 +129,7 @@ export default function AddChuddi() {
           {isSubmitting ? 'SUBMITTING...' : S.SUBMIT_BTN}
         </button>
       </div>
+      )}
     </div>
   );
 }
