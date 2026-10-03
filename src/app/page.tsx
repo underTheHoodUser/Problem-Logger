@@ -1,5 +1,4 @@
 "use client";
-import { SubscribeBox } from "@/components/SubscribeBox";
 
 import { useEffect, useState } from "react";
 import { ProblemCard } from '@/components/ProblemCard';
@@ -151,7 +150,6 @@ export default function Home() {
         )}
       </div>
 
-      <SubscribeBox />
     </div>
   );
 }

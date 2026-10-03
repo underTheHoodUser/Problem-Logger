@@ -19,7 +19,13 @@ export default function Header() {
           </h1>
         </Link>
         
-        <nav className="flex items-center shrink-0">
+        <nav className="flex items-center gap-2 sm:gap-4 shrink-0">
+          <Link 
+            href="/subscribe" 
+            className="group relative inline-flex items-center justify-center gap-1.5 md:gap-2 px-3 md:px-6 py-2 md:py-3 bg-cyan-400 border-2 md:border-4 border-black rounded-xl text-black text-[11px] sm:text-xs md:text-xl font-bold tracking-widest transition-transform hover:-translate-y-1 hover:shadow-[6px_6px_0_0_#000] shadow-[3px_3px_0_0_#000] font-['var(--font-rubik)'] hidden sm:inline-flex"
+          >
+            <span>{S.SUBSCRIBE_BUTTON || "SUBSCRIBE"}</span>
+          </Link>
           <Link 
             href="/add" 
             className="group relative inline-flex items-center justify-center gap-1.5 md:gap-2 px-3 md:px-6 py-2 md:py-3 bg-yellow-400 border-2 md:border-4 border-black rounded-xl text-black text-[11px] sm:text-xs md:text-xl font-bold tracking-widest transition-transform hover:-translate-y-1 hover:shadow-[6px_6px_0_0_#000] shadow-[3px_3px_0_0_#000] font-['var(--font-rubik)']"

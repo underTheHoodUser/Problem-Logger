@@ -3,6 +3,7 @@ export const PAGE_STRINGS = {
     APP_NAME: "CHUDDI",
     APP_DOMAIN: ".store",
     ADD_BUTTON: "ADD CHUDDI",
+    SUBSCRIBE_BUTTON: "SUBSCRIBE",
     LOADING: "LOADING...",
     LOADING_MORE: "LOADING MORE CHUDDIS...",
   },
