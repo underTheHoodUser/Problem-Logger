@@ -7,6 +7,8 @@ import { PAGE_STRINGS } from "@/constants/strings";
 import { useInView } from "react-intersection-observer";
 import { toast } from 'react-hot-toast';
 import { useStrings } from "@/context/StringsContext";
+import { Problem } from '@/types/problem.type';
+import { Session } from '@supabase/supabase-js';
 
 const PAGE_SIZE = 10;
 
@@ -16,8 +18,8 @@ export default function AdminPage() {
   
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [session, setSession] = useState<any>(null);
-  const [problems, setProblems] = useState<any[]>([]);
+  const [session, setSession] = useState<Session | null>(null);
+  const [problems, setProblems] = useState<Problem[]>([]);
   const [loading, setLoading] = useState(true);
   const [loginError, setLoginError] = useState("");
   
@@ -87,7 +89,7 @@ export default function AdminPage() {
       const merged = { ...PAGE_STRINGS };
       for (const key in data.data) {
         if (typeof data.data[key] === 'object' && merged[key as keyof typeof PAGE_STRINGS]) {
-          merged[key as keyof typeof PAGE_STRINGS] = { ...merged[key as keyof typeof PAGE_STRINGS], ...data.data[key] } as any;
+          merged[key as keyof typeof PAGE_STRINGS] = { ...merged[key as keyof typeof PAGE_STRINGS], ...data.data[key] };
         } else {
           merged[key as keyof typeof PAGE_STRINGS] = data.data[key];
         }
@@ -115,8 +117,8 @@ export default function AdminPage() {
         
       if (error) throw error;
       toast.success(S.SETTINGS_SAVE_SUCCESS);
-    } catch (e: any) {
-      toast.error(S.SETTINGS_SAVE_ERROR + e.message);
+    } catch (e: unknown) {
+      toast.error(S.SETTINGS_SAVE_ERROR + (e instanceof Error ? e.message : String(e)));
     } finally {
       setConfigSaving(false);
     }
@@ -135,7 +137,7 @@ export default function AdminPage() {
     });
 
     if (error) {
-      setLoginError(error.message);
+      setLoginError((error instanceof Error ? error.message : String(error)));
       setLoading(false);
     }
   };
@@ -164,8 +166,8 @@ export default function AdminPage() {
       } else {
         setProblems(problems.map(p => p.id === id ? { ...p, is_approved: true } : p));
       }
-    } catch (err: any) {
-      toast.error(S.ERROR_NETWORK + err.message);
+    } catch (err: unknown) {
+      toast.error(S.ERROR_NETWORK + (err instanceof Error ? err.message : String(err)));
     }
   };
 
@@ -175,7 +177,7 @@ export default function AdminPage() {
     const { error } = await supabase.from('problems').delete().eq('id', id);
     
     if (error) {
-      toast.error(S.ERROR_DELETE + error.message);
+      toast.error(S.ERROR_DELETE + (error instanceof Error ? error.message : String(error)));
     } else {
       setProblems(problems.filter(p => p.id !== id));
     }

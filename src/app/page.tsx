@@ -6,6 +6,7 @@ import { supabase } from "@/lib/supabase";
 import { formatDistanceToNow } from 'date-fns';
 import { useInView } from 'react-intersection-observer';
 import { toast } from 'react-hot-toast';
+import { Problem } from '@/types/problem.type';
 
 import { useStrings } from '@/context/StringsContext';
 
@@ -82,7 +83,7 @@ const PAGE_SIZE = 10;
 export default function Home() {
   const S = useStrings().HOME;
   const COMMON = useStrings().COMMON;
-  const [problems, setProblems] = useState<any[]>([]);
+  const [problems, setProblems] = useState<Problem[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);

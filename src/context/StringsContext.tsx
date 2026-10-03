@@ -25,7 +25,7 @@ export function StringsProvider({ children }: { children: React.ReactNode }) {
         const merged = { ...DEFAULT_STRINGS };
         for (const key in data.data) {
           if (typeof data.data[key] === 'object' && merged[key as keyof StringsType]) {
-            merged[key as keyof StringsType] = { ...merged[key as keyof StringsType], ...data.data[key] } as any;
+            merged[key as keyof StringsType] = { ...merged[key as keyof StringsType], ...data.data[key] };
           } else {
             merged[key as keyof StringsType] = data.data[key];
           }

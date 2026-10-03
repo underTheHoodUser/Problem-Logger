@@ -13,7 +13,7 @@ export async function getSiteConfig() {
       const merged = { ...PAGE_STRINGS };
       for (const key in data.data) {
         if (typeof data.data[key] === 'object' && merged[key as keyof typeof PAGE_STRINGS]) {
-          merged[key as keyof typeof PAGE_STRINGS] = { ...merged[key as keyof typeof PAGE_STRINGS], ...data.data[key] } as any;
+          merged[key as keyof typeof PAGE_STRINGS] = { ...merged[key as keyof typeof PAGE_STRINGS], ...data.data[key] };
         } else {
           merged[key as keyof typeof PAGE_STRINGS] = data.data[key];
         }
