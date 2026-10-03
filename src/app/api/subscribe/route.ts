@@ -2,6 +2,11 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { Resend } from 'resend';
 import { getSiteConfig } from '@/lib/getConfig';
+import { z } from 'zod';
+
+const SubscribeSchema = z.object({
+  email: z.string().email()
+});
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 const supabase = createClient(
@@ -14,10 +19,14 @@ export async function POST(req: Request) {
     const config = await getSiteConfig();
     const STRINGS = config.EMAILS;
 
-    const { email } = await req.json();
-    if (!email || !email.includes('@')) {
+    const body = await req.json();
+    const parsed = SubscribeSchema.safeParse(body);
+    
+    if (!parsed.success) {
       return NextResponse.json({ error: STRINGS.SUBSCRIBE_ERR_INVALID }, { status: 400 });
     }
+
+    const { email } = parsed.data;
 
     const { data, error } = await supabase
       .from('subscribers')

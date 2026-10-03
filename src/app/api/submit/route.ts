@@ -1,5 +1,11 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { z } from 'zod';
+
+const SubmitSchema = z.object({
+  content: z.string().min(1).max(500),
+  level: z.enum(['dhoom', 'chuddi', 'dhoom_chuddi']),
+});
 
 // We use the Service Role Key here because we need to bypass RLS to check IPs of UNAPPROVED problems too
 const supabase = createClient(
@@ -9,7 +15,14 @@ const supabase = createClient(
 
 export async function POST(req: Request) {
   try {
-    const { content, level } = await req.json();
+    const body = await req.json();
+    const parsed = SubmitSchema.safeParse(body);
+    
+    if (!parsed.success) {
+      return NextResponse.json({ error: "Invalid data format" }, { status: 400 });
+    }
+
+    const { content, level } = parsed.data;
     
     // Get the client IP address (works on Vercel and most hosting providers)
     const forwardedFor = req.headers.get('x-forwarded-for');

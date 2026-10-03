@@ -2,6 +2,11 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { Resend } from 'resend';
 import { getSiteConfig } from '@/lib/getConfig';
+import { z } from 'zod';
+
+const ApproveSchema = z.object({
+  id: z.string().uuid()
+});
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -32,7 +37,14 @@ export async function POST(req: Request) {
     }
 
     // 2. Approve Problem
-    const { id } = await req.json();
+    const body = await req.json();
+    const parsed = ApproveSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json({ error: "Invalid ID format" }, { status: 400 });
+    }
+
+    const { id } = parsed.data;
+    
     const { data: problem, error: updateError } = await supabaseAdmin
       .from('problems')
       .update({ is_approved: true })
