@@ -143,12 +143,6 @@ export function ProblemCard({
           </p>
         </div>
 
-        {/* Author */}
-        <div className="relative z-10 text-right mb-4">
-          <span className="inline-block bg-black text-white px-3 py-1 rounded-full text-xs font-bold font-['var(--font-rubik)'] tracking-wider transform skew-x-12">
-            By: {authorName}
-          </span>
-        </div>
       </div>
 
       {/* Actions */}
