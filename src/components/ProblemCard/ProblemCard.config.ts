@@ -1,4 +1,4 @@
-import { SeverityLevel } from './types';
+import { SeverityLevel } from '@/types/problem.type';
 
 export const SEVERITY_CONFIG: Record<SeverityLevel, { color: string; text: string; border: string; shadow: string; bg: string }> = {
   dhoom: {

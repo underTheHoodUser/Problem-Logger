@@ -1,4 +1,4 @@
-export type SeverityLevel = 'dhoom' | 'chuddi' | 'dhoom chuddi';
+export type SeverityLevel = 'dhoom' | 'chuddi' | 'dhoom_chuddi';
 
 export interface Problem {
   id: string;

@@ -1,4 +1,4 @@
-import { SeverityLevel } from './types';
+import { SeverityLevel } from '@/types/problem.type';
 
 export function CrackEffect({ level }: { level: SeverityLevel }) {
   if (level === 'dhoom') {

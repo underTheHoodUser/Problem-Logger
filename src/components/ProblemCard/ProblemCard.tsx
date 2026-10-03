@@ -1,7 +1,19 @@
 import { ArrowUp, ArrowDown, Clock } from "lucide-react";
-import { ProblemCardProps } from "./types";
+import { SeverityLevel } from "@/types/problem.type";
 import { SEVERITY_CONFIG, CARD_ROTATIONS } from "./ProblemCard.config";
 import { CrackEffect } from "./CrackEffect";
+
+export interface ProblemCardProps {
+  id?: string | number;
+  content: string;
+  level: SeverityLevel;
+  upvotes: number;
+  downvotes: number;
+  createdAt: string;
+  index: number;
+  onUpvote?: () => void;
+  onDownvote?: () => void;
+}
 
 export function ProblemCard({
   content,

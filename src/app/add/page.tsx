@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { SeverityLevel } from "@/components/ProblemCard";
+import { SeverityLevel } from "@/types/problem.type";
 import { supabase } from "@/lib/supabase";
 import { useStrings } from "@/context/StringsContext";
 import { toast } from 'react-hot-toast';

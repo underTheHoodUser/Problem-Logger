@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ProblemCard, SeverityLevel } from '@/components/ProblemCard';
+import { ProblemCard } from '@/components/ProblemCard';
+import { SeverityLevel } from '@/types/problem.type';
 import { supabase } from "@/lib/supabase";
 import { formatDistanceToNow } from 'date-fns';
 import { useInView } from 'react-intersection-observer';
