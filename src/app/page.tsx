@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { ProblemCard, SeverityLevel } from '@/components/ProblemCard';
 import { supabase } from "@/lib/supabase";
 import { formatDistanceToNow } from 'date-fns';
+import { useInView } from 'react-intersection-observer';
+import { toast } from 'react-hot-toast';
 
 function SubscribeBox() {
   const [email, setEmail] = useState("");
@@ -26,10 +28,12 @@ function SubscribeBox() {
       if (!res.ok) {
         setStatus("error");
         setMsg(data.error);
+        toast.error(data.error);
       } else {
         setStatus("success");
-        setMsg("Badiya! Ab har nayi chuddi pe email aayega!");
+        setMsg(data.message || "Badiya! Ab har nayi chuddi pe email aayega!");
         setEmail("");
+        toast.success("Check your email to verify!");
       }
     } catch (err) {
       setStatus("error");
@@ -70,27 +74,52 @@ function SubscribeBox() {
   );
 }
 
+const PAGE_SIZE = 10;
+
 export default function Home() {
   const [problems, setProblems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
+  const { ref, inView } = useInView();
   
-  const fetchProblems = async () => {
+  const fetchProblems = async (currentPage: number) => {
     const { data, error } = await supabase
       .from('problems')
       .select('*')
-      .order('created_at', { ascending: false });
+      .order('created_at', { ascending: false })
+      .range(currentPage * PAGE_SIZE, (currentPage + 1) * PAGE_SIZE - 1);
       
     if (error) {
       console.error("Error fetching problems:", error);
-    } else {
-      setProblems(data || []);
+    } else if (data) {
+      if (currentPage === 0) {
+        setProblems(data);
+      } else {
+        setProblems(prev => {
+          // avoid duplicates if realtime inserted while paginating
+          const existingIds = new Set(prev.map(p => p.id));
+          const newItems = data.filter(d => !existingIds.has(d.id));
+          return [...prev, ...newItems];
+        });
+      }
+      if (data.length < PAGE_SIZE) setHasMore(false);
     }
     setLoading(false);
   };
 
+  // Load more when scrolled to bottom
   useEffect(() => {
-    fetchProblems();
+    if (inView && hasMore && !loading) {
+      setPage(p => p + 1);
+    }
+  }, [inView, hasMore, loading]);
 
+  useEffect(() => {
+    fetchProblems(page);
+  }, [page]);
+
+  useEffect(() => {
     // Subscribe to realtime inserts and updates
     const channel = supabase
       .channel('schema-db-changes')
@@ -98,7 +127,11 @@ export default function Home() {
         'postgres_changes',
         { event: '*', schema: 'public', table: 'problems' },
         (payload) => {
-          fetchProblems();
+          // Rather than refetching everything, we just re-fetch page 0 to get the newest stuff
+          // Or simplest way for this app: just reset to page 0
+          setPage(0);
+          setHasMore(true);
+          fetchProblems(0);
         }
       )
       .subscribe();
@@ -109,17 +142,15 @@ export default function Home() {
   }, []);
 
   const handleVote = async (id: string, type: 'upvote' | 'downvote') => {
-    // Basic LocalStorage vote limiting
     const voted = JSON.parse(localStorage.getItem('voted_problems') || '{}');
     if (voted[id]) {
-      alert("Bhai ek hi baar vote kar sakta hai ek problem pe!");
+      toast.error("Bhai ek hi baar vote kar sakta hai ek problem pe!");
       return;
     }
 
     const problem = problems.find(p => p.id === id);
     if (!problem) return;
 
-    // Optimistic UI update
     setProblems(problems.map(p => {
       if (p.id === id) {
         return { ...p, [type === 'upvote' ? 'upvotes' : 'downvotes']: p[type === 'upvote' ? 'upvotes' : 'downvotes'] + 1 };
@@ -137,14 +168,14 @@ export default function Home() {
       
     if (error) {
       console.error("Vote failed", error);
-      alert("Network error, vote fail ho gaya!");
+      toast.error("Network error, vote fail ho gaya!");
     }
   };
 
   return (
     <div className="py-4 space-y-6">
       <div className="grid gap-6">
-        {loading ? (
+        {loading && page === 0 ? (
           <div className="text-center py-20 text-xl text-yellow-400 font-black animate-pulse uppercase tracking-widest font-['var(--font-rubik)']">
             Loading Chuddis...
           </div>
@@ -167,6 +198,15 @@ export default function Home() {
               onDownvote={() => handleVote(problem.id, 'downvote')}
             />
           ))
+        )}
+        
+        {hasMore && !loading && (
+          <div ref={ref} className="h-10 w-full" />
+        )}
+        {loading && page > 0 && (
+          <div className="text-center py-4 text-cyan-400 font-bold animate-pulse font-['var(--font-rubik)'] tracking-widest">
+            LOADING MORE CHUDDIS...
+          </div>
         )}
       </div>
 

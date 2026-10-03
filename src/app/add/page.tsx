@@ -2,13 +2,14 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { PAGE_STRINGS } from "@/constants/strings";
 import { SeverityLevel } from "@/components/ProblemCard";
 import { supabase } from "@/lib/supabase";
+import { useStrings } from "@/context/StringsContext";
+import { toast } from 'react-hot-toast';
 
 export default function AddChuddi() {
   const router = useRouter();
-  const S = PAGE_STRINGS.ADD_PAGE;
+  const S = useStrings().ADD_PAGE;
   const [selectedLevel, setSelectedLevel] = useState<SeverityLevel>('chuddi');
   const [content, setContent] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -21,7 +22,7 @@ export default function AddChuddi() {
   ] as const;
 
   const handleSubmit = async () => {
-    if (!content.trim()) return alert("Bhai problem toh likh!");
+    if (!content.trim()) return toast.error("Bhai problem toh likh!");
     
     setIsSubmitting(true);
     
@@ -35,13 +36,13 @@ export default function AddChuddi() {
       const data = await res.json();
       
       if (!res.ok) {
-        alert(data.error || "Error ho gaya bhai, server check kar.");
+        toast.error(data.error || "Error ho gaya bhai, server check kar.");
       } else {
         setIsSuccess(true);
       }
     } catch (err) {
       console.error(err);
-      alert("Network error ho gaya.");
+      toast.error("Network error ho gaya.");
     } finally {
       setIsSubmitting(false);
     }

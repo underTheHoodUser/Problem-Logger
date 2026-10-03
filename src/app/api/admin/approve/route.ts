@@ -38,15 +38,18 @@ export async function POST(req: Request) {
 
     if (updateError) throw updateError;
 
-    // 3. Fetch Subscribers
-    const { data: subscribers } = await supabaseAdmin.from('subscribers').select('email');
+    // 3. Fetch Verified Subscribers
+    const { data: subscribers } = await supabaseAdmin
+      .from('subscribers')
+      .select('email')
+      .eq('is_verified', true);
     
     if (subscribers && subscribers.length > 0 && process.env.RESEND_API_KEY) {
       // 4. Send Email via Resend
       const emails = subscribers.map(s => s.email);
       
       const emailResult = await resend.emails.send({
-        from: 'onboarding@resend.dev', // Use this for testing. Once you verify your domain on Resend, change it back to alerts@chuddi.store
+        from: 'alerts@chuddi.store',
         to: emails,
         subject: `Fat gyi kisi ki! Level: ${problem.level.toUpperCase()}`,
         html: `
