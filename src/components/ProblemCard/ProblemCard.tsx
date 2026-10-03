@@ -1,7 +1,13 @@
-import { ArrowUp, ArrowDown, Clock } from "lucide-react";
+"use client";
+
+import { useRef } from "react";
+import { ArrowUp, ArrowDown, Clock, Share2 } from "lucide-react";
 import { SeverityLevel } from "@/types/problem.type";
 import { SEVERITY_CONFIG, CARD_ROTATIONS } from "./ProblemCard.config";
 import { CrackEffect } from "./CrackEffect";
+import { toPng } from 'html-to-image';
+import download from 'downloadjs';
+import { toast } from "react-hot-toast";
 
 export interface ProblemCardProps {
   id?: string | number;
@@ -16,6 +22,7 @@ export interface ProblemCardProps {
 }
 
 export function ProblemCard({
+  id,
   content,
   level,
   upvotes,
@@ -25,6 +32,8 @@ export function ProblemCard({
   onUpvote,
   onDownvote,
 }: ProblemCardProps) {
+  const cardRef = useRef<HTMLDivElement>(null);
+  
   const {
     color: chipColor,
     text: chipText,
@@ -34,8 +43,24 @@ export function ProblemCard({
   } = SEVERITY_CONFIG[level] || SEVERITY_CONFIG.chuddi;
   const rotation = CARD_ROTATIONS[index % CARD_ROTATIONS.length];
 
+  const handleShare = async () => {
+    if (!cardRef.current) return;
+    try {
+      const dataUrl = await toPng(cardRef.current, {
+        quality: 1.0,
+        pixelRatio: 2,
+        backgroundColor: '#0a0a0a' // dark background
+      });
+      download(dataUrl, `chuddi-${id || index}.png`);
+      toast.success("Meme Downloaded! Share it anywhere!");
+    } catch (err) {
+      toast.error("Failed to generate meme!");
+    }
+  };
+
   return (
     <div
+      ref={cardRef}
       className={`relative ${bg} border-4 ${border} rounded-2xl p-5 md:p-7 ${shadow} hover:-translate-y-1 transition-transform ${rotation} overflow-hidden`}
     >
       {/* Background Crack Effect */}
@@ -64,20 +89,31 @@ export function ProblemCard({
       </div>
 
       {/* Actions */}
-      <div className="relative z-10 flex items-center gap-4">
+      <div className="relative z-10 flex items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <button 
+            onClick={onUpvote}
+            className="flex items-center gap-1.5 bg-white border-2 border-black rounded-full px-4 py-1.5 text-sm font-black text-black hover:bg-cyan-400 transition-colors shadow-[2px_2px_0_0_#000] hover:shadow-[2px_2px_0_0_#06b6d4] active:scale-95 cursor-pointer touch-manipulation"
+          >
+            <ArrowUp className="w-4 h-4 stroke-[3px]" />
+            <span>{upvotes}</span>
+          </button>
+          <button 
+            onClick={onDownvote}
+            className="flex items-center gap-1.5 bg-white border-2 border-black rounded-full px-4 py-1.5 text-sm font-black text-black hover:bg-pink-400 hover:text-white transition-colors shadow-[2px_2px_0_0_#000] hover:shadow-[2px_2px_0_0_#ec4899] active:scale-95 cursor-pointer touch-manipulation"
+          >
+            <ArrowDown className="w-4 h-4 stroke-[3px]" />
+            <span>{downvotes}</span>
+          </button>
+        </div>
+        
         <button 
-          onClick={onUpvote}
-          className="flex items-center gap-1.5 bg-white border-2 border-black rounded-full px-4 py-1.5 text-sm font-black text-black hover:bg-cyan-400 transition-colors shadow-[2px_2px_0_0_#000] hover:shadow-[2px_2px_0_0_#06b6d4] active:scale-95 cursor-pointer touch-manipulation"
+          onClick={handleShare}
+          title="Download as Meme"
+          className="flex items-center gap-2 bg-yellow-400 border-2 border-black rounded-full px-4 py-1.5 text-sm font-black text-black hover:bg-white transition-colors shadow-[2px_2px_0_0_#000] hover:shadow-[2px_2px_0_0_#fff] active:scale-95 cursor-pointer touch-manipulation"
         >
-          <ArrowUp className="w-4 h-4 stroke-[3px]" />
-          <span>{upvotes}</span>
-        </button>
-        <button 
-          onClick={onDownvote}
-          className="flex items-center gap-1.5 bg-white border-2 border-black rounded-full px-4 py-1.5 text-sm font-black text-black hover:bg-pink-400 hover:text-white transition-colors shadow-[2px_2px_0_0_#000] hover:shadow-[2px_2px_0_0_#ec4899] active:scale-95 cursor-pointer touch-manipulation"
-        >
-          <ArrowDown className="w-4 h-4 stroke-[3px]" />
-          <span>{downvotes}</span>
+          <Share2 className="w-4 h-4 stroke-[3px]" />
+          <span className="hidden sm:inline">SHARE</span>
         </button>
       </div>
     </div>
