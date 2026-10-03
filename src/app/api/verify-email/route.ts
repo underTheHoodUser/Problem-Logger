@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { getSiteConfig } from '@/lib/getConfig';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -8,28 +9,30 @@ const supabase = createClient(
 
 export async function GET(req: Request) {
   try {
+    const config = await getSiteConfig();
+    const STRINGS = config.EMAILS;
+
     const url = new URL(req.url);
     const token = url.searchParams.get('token');
     
     if (!token) {
-      return NextResponse.json({ error: 'Token missing bhai!' }, { status: 400 });
+      return NextResponse.json({ error: STRINGS.VERIFY_ERR_MISSING }, { status: 400 });
     }
 
-    const { error, count } = await supabase
+    const { error } = await supabase
       .from('subscribers')
       .update({ is_verified: true })
       .eq('verify_token', token);
 
     if (error) {
-      return NextResponse.json({ error: 'Verification fail ho gaya. Invalid token.' }, { status: 400 });
+      return NextResponse.json({ error: STRINGS.VERIFY_ERR_INVALID }, { status: 400 });
     }
 
-    // Return a brutalist success HTML page
     const html = `
       <!DOCTYPE html>
       <html>
         <head>
-          <title>Email Verified!</title>
+          <title>${STRINGS.VERIFY_SUCCESS_TITLE}</title>
           <style>
             @import url('https://fonts.googleapis.com/css2?family=Rubik+Dirt&display=swap');
             body { background-color: #0a0a0a; color: white; font-family: sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }
@@ -41,9 +44,9 @@ export async function GET(req: Request) {
         </head>
         <body>
           <div class="card">
-            <h1>Verified!</h1>
-            <p>Badiya! Tera email verify ho gaya hai. Ab naye problems tere inbox me direct aayenge!</p>
-            <a href="/">Wapas Jaa</a>
+            <h1>${STRINGS.VERIFY_SUCCESS_TITLE}</h1>
+            <p>${STRINGS.VERIFY_SUCCESS_BODY}</p>
+            <a href="/">${STRINGS.VERIFY_SUCCESS_BTN}</a>
           </div>
         </body>
       </html>

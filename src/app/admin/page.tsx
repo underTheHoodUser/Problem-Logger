@@ -6,10 +6,14 @@ import { Trash2, ShieldAlert } from "lucide-react";
 import { PAGE_STRINGS } from "@/constants/strings";
 import { useInView } from "react-intersection-observer";
 import { toast } from 'react-hot-toast';
+import { useStrings } from "@/context/StringsContext";
 
 const PAGE_SIZE = 10;
 
 export default function AdminPage() {
+  const COMMON = useStrings().COMMON;
+  const S = useStrings().ADMIN;
+  
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [session, setSession] = useState<any>(null);
@@ -80,14 +84,22 @@ export default function AdminPage() {
   const fetchConfig = async () => {
     const { data } = await supabase.from('site_config').select('data').eq('id', 'global_strings').single();
     if (data) {
-      setConfigJson(JSON.stringify(data.data, null, 2));
+      const merged = { ...PAGE_STRINGS };
+      for (const key in data.data) {
+        if (typeof data.data[key] === 'object' && merged[key as keyof typeof PAGE_STRINGS]) {
+          merged[key as keyof typeof PAGE_STRINGS] = { ...merged[key as keyof typeof PAGE_STRINGS], ...data.data[key] } as any;
+        } else {
+          merged[key as keyof typeof PAGE_STRINGS] = data.data[key];
+        }
+      }
+      setConfigJson(JSON.stringify(merged, null, 2));
     } else {
       setConfigJson(JSON.stringify(PAGE_STRINGS, null, 2));
     }
   };
 
   const handleResetToDefault = () => {
-    if (confirm("Reset to default strings? (Make sure to click SAVE after)")) {
+    if (confirm(S.SETTINGS_RESET_CONFIRM)) {
       setConfigJson(JSON.stringify(PAGE_STRINGS, null, 2));
     }
   };
@@ -102,9 +114,9 @@ export default function AdminPage() {
         .upsert({ id: 'global_strings', data: parsed });
         
       if (error) throw error;
-      toast.success("Settings saved! Refresh the app to see changes.");
+      toast.success(S.SETTINGS_SAVE_SUCCESS);
     } catch (e: any) {
-      toast.error("Invalid JSON format or network error: " + e.message);
+      toast.error(S.SETTINGS_SAVE_ERROR + e.message);
     } finally {
       setConfigSaving(false);
     }
@@ -148,29 +160,29 @@ export default function AdminPage() {
 
       if (!res.ok) {
         const errorData = await res.json();
-        toast.error("Error approving problem: " + errorData.error);
+        toast.error(S.ERROR_APPROVE + errorData.error);
       } else {
         setProblems(problems.map(p => p.id === id ? { ...p, is_approved: true } : p));
       }
     } catch (err: any) {
-      toast.error("Network error: " + err.message);
+      toast.error(S.ERROR_NETWORK + err.message);
     }
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Pakka delete karna hai?")) return;
+    if (!confirm(S.DELETE_CONFIRM)) return;
     
     const { error } = await supabase.from('problems').delete().eq('id', id);
     
     if (error) {
-      toast.error("Error deleting problem: " + error.message);
+      toast.error(S.ERROR_DELETE + error.message);
     } else {
       setProblems(problems.filter(p => p.id !== id));
     }
   };
 
   if (loading && !session) {
-    return <div className="text-center py-20 text-yellow-400 font-bold animate-pulse font-['var(--font-rubik)'] text-2xl tracking-widest">LOADING ADMIN...</div>;
+    return <div className="text-center py-20 text-yellow-400 font-bold animate-pulse font-['var(--font-rubik)'] text-2xl tracking-widest">{COMMON.LOADING}</div>;
   }
 
   if (!session) {
@@ -178,7 +190,7 @@ export default function AdminPage() {
       <div className="max-w-md mx-auto py-20 px-4">
         <div className="bg-[#111] border-4 border-pink-500 rounded-3xl p-8 shadow-[8px_8px_0_0_#ec4899] text-center">
           <ShieldAlert className="w-16 h-16 text-pink-500 mx-auto mb-4" />
-          <h1 className="text-3xl text-white font-black mb-6 font-['var(--font-rubik)']">ADMIN LOGIN</h1>
+          <h1 className="text-3xl text-white font-black mb-6 font-['var(--font-rubik)']">{S.LOGIN_TITLE}</h1>
           
           {loginError && (
             <div className="bg-red-500/20 text-red-500 border-2 border-red-500 rounded-lg p-3 mb-4 font-bold text-sm">
@@ -191,7 +203,7 @@ export default function AdminPage() {
               type="email" 
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="Admin Email"
+              placeholder={S.LOGIN_EMAIL}
               required
               className="w-full bg-[#222] border-4 border-zinc-700 rounded-xl p-4 text-center text-lg text-white placeholder-zinc-500 focus:outline-none focus:border-cyan-400 font-bold"
             />
@@ -199,7 +211,7 @@ export default function AdminPage() {
               type="password" 
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="Password"
+              placeholder={S.LOGIN_PASS}
               required
               className="w-full bg-[#222] border-4 border-zinc-700 rounded-xl p-4 text-center text-lg text-white placeholder-zinc-500 focus:outline-none focus:border-cyan-400 font-bold"
             />
@@ -208,7 +220,7 @@ export default function AdminPage() {
               disabled={loading}
               className="w-full bg-cyan-400 border-4 border-black rounded-xl py-4 text-black text-xl font-black uppercase tracking-widest hover:bg-yellow-400 transition-colors shadow-[4px_4px_0_0_#000] active:scale-95 disabled:opacity-50"
             >
-              {loading ? "AUTHENTICATING..." : "LOGIN"}
+              {loading ? S.LOGIN_WAIT : S.LOGIN_BTN}
             </button>
           </form>
         </div>
@@ -220,21 +232,21 @@ export default function AdminPage() {
     <div className="max-w-4xl mx-auto py-10 px-4">
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-8">
         <h1 className="text-3xl md:text-4xl text-white font-black font-['var(--font-rubik)'] drop-shadow-[2px_2px_0_#ec4899] text-center sm:text-left">
-          CHUDDI CONTROL PANEL
+          {S.DASHBOARD_TITLE}
         </h1>
         <div className="flex items-center gap-4">
-          <span className="text-sm text-zinc-400 font-bold hidden md:block">Logged in as {session.user.email}</span>
+          <span className="text-sm text-zinc-400 font-bold hidden md:block">{S.LOGGED_IN_AS} {session.user.email}</span>
           <button 
             onClick={handleLogout}
             className="bg-[#222] border-2 border-zinc-700 text-zinc-300 px-4 py-2 rounded-lg font-bold text-sm hover:bg-red-500 hover:text-white hover:border-red-600 transition-colors"
           >
-            LOGOUT
+            {S.LOGOUT_BTN}
           </button>
         </div>
       </div>
 
       {loading && page === 0 ? (
-        <div className="text-center text-yellow-400 font-bold animate-pulse font-['var(--font-rubik)'] text-2xl tracking-widest">LOADING...</div>
+        <div className="text-center text-yellow-400 font-bold animate-pulse font-['var(--font-rubik)'] text-2xl tracking-widest">{COMMON.LOADING}</div>
       ) : (
         <>
           <div className="flex gap-4 mb-6">
@@ -242,13 +254,13 @@ export default function AdminPage() {
               onClick={() => setActiveTab("problems")}
               className={`px-6 py-2 rounded-xl font-black uppercase tracking-widest border-4 ${activeTab === 'problems' ? 'bg-cyan-400 border-black text-black shadow-[4px_4px_0_0_#000]' : 'bg-[#111] border-zinc-700 text-zinc-400 hover:border-cyan-400'}`}
             >
-              PROBLEMS
+              {S.TAB_PROBLEMS}
             </button>
             <button 
               onClick={() => setActiveTab("settings")}
               className={`px-6 py-2 rounded-xl font-black uppercase tracking-widest border-4 ${activeTab === 'settings' ? 'bg-pink-500 border-black text-black shadow-[4px_4px_0_0_#000]' : 'bg-[#111] border-zinc-700 text-zinc-400 hover:border-pink-500'}`}
             >
-              SITE CONFIG
+              {S.TAB_SETTINGS}
             </button>
           </div>
 
@@ -260,11 +272,11 @@ export default function AdminPage() {
                     <div className="flex flex-wrap gap-2 mb-3">
                       {!prob.is_approved ? (
                         <span className="bg-yellow-400 text-black px-2 py-1 rounded text-xs font-black uppercase tracking-widest animate-pulse">
-                          NEEDS APPROVAL
+                          {S.NEEDS_APPROVAL}
                         </span>
                       ) : (
                         <span className="bg-green-400 text-black px-2 py-1 rounded text-xs font-black uppercase tracking-widest">
-                          APPROVED
+                          {S.APPROVED}
                         </span>
                       )}
                       <span className="bg-[#222] px-2 py-1 rounded text-xs font-bold text-zinc-400 uppercase border border-zinc-700">
@@ -285,7 +297,7 @@ export default function AdminPage() {
                         onClick={() => handleApprove(prob.id)}
                         className="flex-1 md:flex-none bg-green-400 border-2 border-green-500 text-black font-black hover:bg-green-300 px-4 py-3 rounded-lg transition-colors active:scale-95 shadow-[2px_2px_0_0_#22c55e]"
                       >
-                        APPROVE
+                        {S.BTN_APPROVE}
                       </button>
                     )}
                     <button 
@@ -299,21 +311,21 @@ export default function AdminPage() {
                 </div>
               ))}
               {problems.length === 0 && (
-                <div className="text-center text-zinc-500 py-10 font-bold">No problems found.</div>
+                <div className="text-center text-zinc-500 py-10 font-bold">{S.NO_PROBLEMS}</div>
               )}
               {hasMore && !loading && (
                 <div ref={ref} className="h-10 w-full" />
               )}
               {loading && page > 0 && (
                 <div className="text-center py-4 text-cyan-400 font-bold animate-pulse font-['var(--font-rubik)'] tracking-widest">
-                  LOADING MORE...
+                  {COMMON.LOADING_MORE}
                 </div>
               )}
             </div>
           ) : (
             <div className="bg-[#111] border-4 border-pink-500 rounded-3xl p-6 shadow-[8px_8px_0_0_#ec4899]">
-              <h2 className="text-2xl text-white font-black mb-4 font-['var(--font-rubik)']">GLOBAL STRINGS (JSON)</h2>
-              <p className="text-zinc-400 mb-6 font-bold">WARNING: If you break the JSON formatting, the site might crash! Make sure you use double quotes for all keys.</p>
+              <h2 className="text-2xl text-white font-black mb-4 font-['var(--font-rubik)']">{S.SETTINGS_TITLE}</h2>
+              <p className="text-zinc-400 mb-6 font-bold">{S.SETTINGS_WARNING}</p>
               
               <textarea 
                 value={configJson}
@@ -333,7 +345,7 @@ export default function AdminPage() {
                   disabled={configSaving}
                   className="flex-[2] bg-pink-500 border-4 border-black text-black px-6 py-4 rounded-xl font-black uppercase tracking-widest hover:bg-yellow-400 active:scale-95 transition-colors shadow-[4px_4px_0_0_#000]"
                 >
-                  {configSaving ? 'SAVING...' : 'SAVE SETTINGS'}
+                  {configSaving ? S.SETTINGS_SAVING : S.SETTINGS_SAVE}
                 </button>
               </div>
             </div>

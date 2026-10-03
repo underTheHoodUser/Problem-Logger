@@ -21,7 +21,16 @@ export function StringsProvider({ children }: { children: React.ReactNode }) {
         .single();
         
       if (data && data.data) {
-        setS(data.data as StringsType);
+        // Safely merge DB config with defaults to prevent crashes if DB has old schema
+        const merged = { ...DEFAULT_STRINGS };
+        for (const key in data.data) {
+          if (typeof data.data[key] === 'object' && merged[key as keyof StringsType]) {
+            merged[key as keyof StringsType] = { ...merged[key as keyof StringsType], ...data.data[key] } as any;
+          } else {
+            merged[key as keyof StringsType] = data.data[key];
+          }
+        }
+        setS(merged);
       } else {
         // If it doesn't exist yet, we can insert the defaults using an admin later, 
         // for now just use the local defaults.

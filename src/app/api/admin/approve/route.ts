@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { Resend } from 'resend';
+import { getSiteConfig } from '@/lib/getConfig';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -11,6 +12,9 @@ const supabaseAdmin = createClient(
 
 export async function POST(req: Request) {
   try {
+    const config = await getSiteConfig();
+    const STRINGS = config.EMAILS;
+
     // 1. Verify Authentication
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -49,18 +53,18 @@ export async function POST(req: Request) {
       const emails = subscribers.map(s => s.email);
       
       const emailResult = await resend.emails.send({
-        from: 'alerts@chuddi.store',
+        from: STRINGS.FROM_EMAIL,
         to: emails,
-        subject: `Fat gyi kisi ki! Level: ${problem.level.toUpperCase()}`,
+        subject: `${STRINGS.APPROVE_SUBJECT_PREFIX}${problem.level.toUpperCase()}`,
         html: `
           <div style="font-family: sans-serif; padding: 20px; background: #0a0a0a; color: white;">
-            <h1 style="color: #4ade80;">Nayi Chuddi Aa Gayi Hai!</h1>
+            <h1 style="color: #4ade80;">${STRINGS.APPROVE_TITLE}</h1>
             <p style="font-size: 18px; border-left: 4px solid #ec4899; padding-left: 10px;">
               "${problem.content}"
             </p>
-            <p><strong>Threat Level:</strong> ${problem.level.toUpperCase()}</p>
+            <p><strong>${STRINGS.APPROVE_THREAT_LABEL}</strong> ${problem.level.toUpperCase()}</p>
             <a href="https://chuddi.store" style="display: inline-block; background: #06b6d4; color: black; padding: 10px 20px; text-decoration: none; font-weight: bold; margin-top: 20px;">
-              VIEW ON FEED
+              ${STRINGS.APPROVE_BTN}
             </a>
           </div>
         `

@@ -7,10 +7,13 @@ import { formatDistanceToNow } from 'date-fns';
 import { useInView } from 'react-intersection-observer';
 import { toast } from 'react-hot-toast';
 
+import { useStrings } from '@/context/StringsContext';
+
 function SubscribeBox() {
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [msg, setMsg] = useState("");
+  const S = useStrings().HOME;
 
   const handleSubscribe = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,20 +34,20 @@ function SubscribeBox() {
         toast.error(data.error);
       } else {
         setStatus("success");
-        setMsg(data.message || "Badiya! Ab har nayi chuddi pe email aayega!");
+        setMsg(data.message);
         setEmail("");
-        toast.success("Check your email to verify!");
+        toast.success(S.SUBSCRIBE_SUCCESS_TOAST);
       }
     } catch (err) {
       setStatus("error");
-      setMsg("Network error bhai!");
+      setMsg(S.VOTE_FAIL);
     }
   };
 
   return (
     <div className="bg-[#111] border-4 border-pink-500 rounded-3xl p-6 md:p-8 mt-12 shadow-[8px_8px_0_0_#ec4899] text-center">
-      <h3 className="text-2xl text-white font-black uppercase font-['var(--font-rubik)'] mb-2">EMAIL ALERTS CHAHIYE?</h3>
-      <p className="text-zinc-400 font-bold mb-6">Nayi approved problem aate hi sidha inbox me!</p>
+      <h3 className="text-2xl text-white font-black uppercase font-['var(--font-rubik)'] mb-2">{S.SUBSCRIBE_TITLE}</h3>
+      <p className="text-zinc-400 font-bold mb-6">{S.SUBSCRIBE_SUBTITLE}</p>
       
       {status === 'success' ? (
         <div className="bg-green-400 text-black border-4 border-black p-4 rounded-xl font-black uppercase">
@@ -56,7 +59,7 @@ function SubscribeBox() {
             type="email" 
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="tera@email.com"
+            placeholder={S.SUBSCRIBE_PLACEHOLDER}
             required
             className="flex-1 bg-[#222] border-4 border-zinc-700 rounded-xl p-3 text-white focus:outline-none focus:border-cyan-400 font-bold placeholder-zinc-500"
           />
@@ -65,7 +68,7 @@ function SubscribeBox() {
             disabled={status === 'loading'}
             className="bg-cyan-400 border-4 border-black text-black px-6 py-3 rounded-xl font-black uppercase tracking-widest hover:bg-yellow-400 active:scale-95 transition-colors shadow-[4px_4px_0_0_#000]"
           >
-            {status === 'loading' ? 'RUK...' : 'SUBSCRIBE'}
+            {status === 'loading' ? S.SUBSCRIBE_WAIT : S.SUBSCRIBE_BTN}
           </button>
         </form>
       )}
@@ -77,6 +80,8 @@ function SubscribeBox() {
 const PAGE_SIZE = 10;
 
 export default function Home() {
+  const S = useStrings().HOME;
+  const COMMON = useStrings().COMMON;
   const [problems, setProblems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(0);
@@ -144,7 +149,7 @@ export default function Home() {
   const handleVote = async (id: string, type: 'upvote' | 'downvote') => {
     const voted = JSON.parse(localStorage.getItem('voted_problems') || '{}');
     if (voted[id]) {
-      toast.error("Bhai ek hi baar vote kar sakta hai ek problem pe!");
+      toast.error(S.ALREADY_VOTED);
       return;
     }
 
@@ -168,7 +173,7 @@ export default function Home() {
       
     if (error) {
       console.error("Vote failed", error);
-      toast.error("Network error, vote fail ho gaya!");
+      toast.error(S.VOTE_FAIL);
     }
   };
 
@@ -177,7 +182,7 @@ export default function Home() {
       <div className="grid gap-6">
         {loading && page === 0 ? (
           <div className="text-center py-20 text-xl text-yellow-400 font-black animate-pulse uppercase tracking-widest font-['var(--font-rubik)']">
-            Loading Chuddis...
+            {COMMON.LOADING}
           </div>
         ) : problems.length === 0 ? (
           <div className="text-center bg-[#111] border-4 border-cyan-400 rounded-3xl p-10 shadow-[8px_8px_0_0_#06b6d4]">
@@ -205,7 +210,7 @@ export default function Home() {
         )}
         {loading && page > 0 && (
           <div className="text-center py-4 text-cyan-400 font-bold animate-pulse font-['var(--font-rubik)'] tracking-widest">
-            LOADING MORE CHUDDIS...
+            {COMMON.LOADING_MORE}
           </div>
         )}
       </div>
