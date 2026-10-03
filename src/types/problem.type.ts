@@ -8,5 +8,14 @@ export interface Problem {
   downvotes: number;
   is_approved: boolean;
   ip_address: string;
+  author_name?: string;
+  created_at: string;
+}
+
+export interface Comment {
+  id: string;
+  problem_id: string;
+  content: string;
+  author_name: string;
   created_at: string;
 }

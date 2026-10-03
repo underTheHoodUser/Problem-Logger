@@ -6,10 +6,12 @@ import { SeverityLevel } from "@/types/problem.type";
 import { supabase } from "@/lib/supabase";
 import { useStrings } from "@/context/StringsContext";
 import { toast } from 'react-hot-toast';
+import { useAvatar } from "@/lib/useAvatar";
 
 export default function AddChuddi() {
   const router = useRouter();
   const S = useStrings().ADD_PAGE;
+  const avatarName = useAvatar();
   const [selectedLevel, setSelectedLevel] = useState<SeverityLevel>('chuddi');
   const [content, setContent] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -30,7 +32,7 @@ export default function AddChuddi() {
       const res = await fetch('/api/submit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content, level: selectedLevel })
+        body: JSON.stringify({ content, level: selectedLevel, author_name: avatarName })
       });
 
       const data = await res.json();

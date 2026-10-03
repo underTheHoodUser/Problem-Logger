@@ -174,6 +174,7 @@ export default function Home() {
               level={problem.level as SeverityLevel}
               upvotes={problem.upvotes}
               downvotes={problem.downvotes}
+              authorName={problem.author_name}
               createdAt={formatDistanceToNow(new Date(problem.created_at), { addSuffix: true })}
               onUpvote={() => handleVote(problem.id, 'upvote')}
               onDownvote={() => handleVote(problem.id, 'downvote')}

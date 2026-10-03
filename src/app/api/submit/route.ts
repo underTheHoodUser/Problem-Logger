@@ -5,6 +5,7 @@ import { z } from 'zod';
 const SubmitSchema = z.object({
   content: z.string().min(1).max(500),
   level: z.enum(['dhoom', 'chuddi', 'dhoom_chuddi']),
+  author_name: z.string().optional()
 });
 
 // We use the Service Role Key here because we need to bypass RLS to check IPs of UNAPPROVED problems too
@@ -22,7 +23,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Invalid data format" }, { status: 400 });
     }
 
-    const { content, level } = parsed.data;
+    const { content, level, author_name } = parsed.data;
     
     // Get the client IP address (works on Vercel and most hosting providers)
     const forwardedFor = req.headers.get('x-forwarded-for');
@@ -53,10 +54,10 @@ export async function POST(req: Request) {
       }
     }
 
-    // Insert the new problem with the IP address
+    // Insert the new problem with the IP address and author name
     const { error: insertError } = await supabase
       .from('problems')
-      .insert([{ content, level, ip_address: ip }]);
+      .insert([{ content, level, ip_address: ip, author_name: author_name || 'Anonymous' }]);
 
     if (insertError) throw insertError;
 
